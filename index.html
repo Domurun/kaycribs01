@@ -93,6 +93,31 @@
             color: #6b7280;
             background: transparent;
         }
+
+        /* Chat Styles */
+        .chat-sidebar-item.active {
+            background-color: #f0fdf4;
+            border-left: 4px solid #16a34a;
+        }
+        .message-bubble {
+            max-width: 75%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            position: relative;
+        }
+        .message-sent {
+            background-color: #16a34a;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 0;
+        }
+        .message-received {
+            background-color: #f3f4f6;
+            color: #1f2937;
+            margin-right: auto;
+            border-bottom-left-radius: 0;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased flex flex-col min-h-screen">
@@ -134,6 +159,7 @@
                 <a href="#" onclick="router.navigate('marketplace'); toggleMobileMenu()" class="text-gray-700 font-medium hover:text-green-600">Marketplace</a>
                 <a href="#" onclick="router.navigate('legal'); toggleMobileMenu()" class="text-gray-700 font-medium hover:text-green-600">Legal Services</a>
                 <a href="#" onclick="router.navigate('agents'); toggleMobileMenu()" class="text-gray-700 font-medium hover:text-green-600">Agents</a>
+                <a href="#" onclick="router.navigate('chat'); toggleMobileMenu()" class="text-gray-700 font-medium hover:text-green-600 hidden mobile-chat-link">Messages</a>
                 <div id="auth-buttons-mobile" class="flex flex-col gap-3 pt-4 border-t border-gray-100">
                     <!-- Injected via JS -->
                 </div>
@@ -212,14 +238,15 @@
                 <div class="container mx-auto px-6">
                     <!-- Filters -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-wrap gap-4 items-center justify-between">
-                        <div class="flex gap-2">
-                            <button class="px-4 py-2 text-sm font-medium bg-green-100 text-green-700 rounded-md transition-colors hover:bg-green-200">All</button>
-                            <button class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors">For Sale</button>
-                            <button class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors">For Rent</button>
-                            <button class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors">For Lease</button>
+                        <div class="flex gap-2" id="marketplace-filters">
+                            <button onclick="filterMarketplace('all')" class="filter-btn px-4 py-2 text-sm font-medium bg-green-100 text-green-700 rounded-md transition-colors hover:bg-green-200 active" data-filter="all">All</button>
+                            <button onclick="filterMarketplace('For Sale')" class="filter-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" data-filter="For Sale">For Sale</button>
+                            <button onclick="filterMarketplace('For Rent')" class="filter-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" data-filter="For Rent">For Rent</button>
+                            <button onclick="filterMarketplace('For Lease')" class="filter-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" data-filter="For Lease">For Lease</button>
                         </div>
-                        <div class="flex gap-2 w-full md:w-auto">
-                            <input type="text" placeholder="Search location..." class="px-4 py-2 border border-gray-200 rounded-lg text-sm w-full md:w-64 focus:outline-none focus:border-green-500">
+                        <div class="flex gap-2 w-full md:w-auto relative">
+                            <input type="text" id="marketplace-search" oninput="searchMarketplace(this.value)" placeholder="Search location or title..." class="px-4 py-2 pl-10 border border-gray-200 rounded-lg text-sm w-full md:w-64 focus:outline-none focus:border-green-500">
+                            <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3 top-3"></i>
                         </div>
                     </div>
 
@@ -303,6 +330,48 @@
                     </div>
                 </div>
             </section>
+        </div>
+
+        <!-- PAGE: CHAT (New) -->
+        <div id="view-chat" class="page-view">
+            <div class="flex h-[calc(100vh-72px)] bg-gray-50 overflow-hidden">
+                <!-- Chat Sidebar -->
+                <div class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col h-full">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="font-heading font-bold text-xl text-gray-900">Messages</h2>
+                    </div>
+                    <div id="chat-list" class="flex-grow overflow-y-auto">
+                        <!-- Chat Items Injected Here -->
+                    </div>
+                </div>
+
+                <!-- Chat Main Area -->
+                <div class="hidden md:flex flex-1 flex-col h-full bg-gray-100" id="chat-main">
+                    <div id="chat-header" class="bg-white p-4 border-b border-gray-200 flex items-center gap-3 shadow-sm">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500" id="chat-header-avatar">?</div>
+                        <div>
+                            <h3 class="font-bold text-gray-900" id="chat-header-name">Select a conversation</h3>
+                            <p class="text-xs text-gray-500" id="chat-header-status"></p>
+                        </div>
+                    </div>
+                    
+                    <div id="chat-messages" class="flex-grow overflow-y-auto p-6 space-y-4">
+                        <!-- Messages Injected Here -->
+                        <div class="flex items-center justify-center h-full text-gray-400">
+                            <p>Select a chat from the sidebar to start messaging.</p>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-white border-t border-gray-200 hidden" id="chat-input-area">
+                        <form onsubmit="handleSendMessage(event)" class="flex gap-2">
+                            <input type="text" id="message-input" class="flex-grow px-4 py-3 bg-gray-100 border border-transparent rounded-xl focus:bg-white focus:border-green-500 focus:outline-none transition-all" placeholder="Type a message...">
+                            <button type="submit" class="bg-green-600 text-white p-3 rounded-xl hover:bg-green-700 transition-colors shadow-md">
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- PAGE: DASHBOARD (Protected) -->
@@ -496,6 +565,15 @@
                         <span id="detail-location">Location</span>
                     </div>
                     <div class="text-3xl font-bold text-green-600 mb-6" id="detail-price">₦0</div>
+                    
+                    <div class="flex gap-3 mb-6">
+                        <button onclick="saveProperty(currentPropertyId)" class="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2" id="detail-save-btn">
+                            <i data-lucide="heart" class="w-5 h-5"></i> Save
+                        </button>
+                        <button onclick="shareProperty(currentPropertyId)" class="flex-1 border border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="share-2" class="w-5 h-5"></i> Share
+                        </button>
+                    </div>
                 </div>
 
                 <div class="space-y-6">
@@ -598,8 +676,8 @@
         const router = {
             currentPage: 'home',
             navigate: function(pageId) {
-                // If trying to access dashboard but not logged in, show auth modal
-                if (pageId === 'dashboard' && !appState.isLoggedIn) {
+                // Check auth for protected routes
+                if ((pageId === 'dashboard' || pageId === 'chat') && !appState.isLoggedIn) {
                     toggleAuthModal();
                     return;
                 }
@@ -624,10 +702,11 @@
                         }
                     });
 
-                    // Update UI components that depend on view
+                    // View specific logic
                     if(pageId === 'home') renderHomeListings();
                     if(pageId === 'marketplace') renderMarketplaceListings();
                     if(pageId === 'dashboard') renderDashboardListings();
+                    if(pageId === 'chat') renderChatList();
 
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
@@ -636,10 +715,13 @@
 
         // --- 2. App State ---
         let currentAuthRole = 'buyer'; // 'buyer' or 'seller'
+        let currentPropertyId = null; // Track currently open property detail
+        let activeChatId = null;
 
         const appState = {
             isLoggedIn: localStorage.getItem('kaycribs_logged_in') === 'true',
             user: JSON.parse(localStorage.getItem('kaycribs_user')) || null,
+            savedListings: JSON.parse(localStorage.getItem('kaycribs_saved')) || [],
             listings: [
                 {
                     id: 1,
@@ -689,6 +771,16 @@
                     advertiser: "LandWey NG",
                     description: "Fenced and gated dry land in a fast-developing area. Comes with C of O. Buy and build immediately."
                 }
+            ],
+            chats: [
+                {
+                    id: 1,
+                    advertiser: "KayCribs Realty",
+                    messages: [
+                        { sender: 'them', text: 'Hello! Are you interested in the Duplex?' },
+                        { sender: 'me', text: 'Yes, is it still available?' }
+                    ]
+                }
             ]
         };
 
@@ -701,19 +793,70 @@
             router.navigate('home');
         });
 
-        // --- 4. Render Helpers ---
+        // --- 4. Helper Functions (Save, Share) ---
+        function saveProperty(id) {
+            if (!appState.isLoggedIn) {
+                alert("Please log in to save properties.");
+                toggleAuthModal('buyer');
+                return;
+            }
+
+            const index = appState.savedListings.indexOf(id);
+            const btn = document.querySelector(`.save-btn-${id}`);
+            const detailBtn = document.getElementById('detail-save-btn');
+
+            if (index === -1) {
+                appState.savedListings.push(id);
+                // Update Icon to Filled
+                if(btn) btn.innerHTML = `<i data-lucide="heart" class="w-5 h-5 fill-red-500 text-red-500"></i>`;
+                if(detailBtn && currentPropertyId === id) {
+                    detailBtn.innerHTML = `<i data-lucide="heart" class="w-5 h-5 fill-red-500 text-red-500"></i> Saved`;
+                    detailBtn.classList.add('text-red-600', 'bg-red-50');
+                }
+                alert("Property Saved!");
+            } else {
+                appState.savedListings.splice(index, 1);
+                // Update Icon to Outline
+                if(btn) btn.innerHTML = `<i data-lucide="heart" class="w-5 h-5"></i>`;
+                if(detailBtn && currentPropertyId === id) {
+                    detailBtn.innerHTML = `<i data-lucide="heart" class="w-5 h-5"></i> Save`;
+                    detailBtn.classList.remove('text-red-600', 'bg-red-50');
+                }
+            }
+            localStorage.setItem('kaycribs_saved', JSON.stringify(appState.savedListings));
+            lucide.createIcons();
+            
+            // Refresh dashboard if active
+            if(router.currentPage === 'dashboard') renderDashboardListings();
+        }
+
+        function shareProperty(id) {
+            const item = appState.listings.find(l => l.id === id);
+            const text = `Check out this property on KayCribs: ${item.title} - ${item.location} for ₦${item.price.toLocaleString()}`;
+            
+            // Simulation
+            alert(`Link Copied to Clipboard!\n\n"${text}"`);
+        }
+
+        // --- 5. Render Helpers ---
         function createListingCard(item) {
+            const isSaved = appState.savedListings.includes(item.id);
             return `
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 group">
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 group relative">
                     <div class="relative h-64 overflow-hidden">
                         <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                         <div class="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-900 uppercase tracking-wide">
                             ${item.type}
                         </div>
-                        ${item.verified ? `
-                        <div class="absolute top-4 right-4 bg-green-500 text-white p-1 rounded-full" title="Verified Listing">
-                            <i data-lucide="shield-check" class="w-4 h-4"></i>
-                        </div>` : ''}
+                        
+                        <div class="absolute top-4 right-4 flex gap-2">
+                            <button onclick="shareProperty(${item.id})" class="bg-white/90 p-2 rounded-full hover:bg-white text-gray-700 transition-colors shadow-sm">
+                                <i data-lucide="share-2" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="saveProperty(${item.id})" class="save-btn-${item.id} bg-white/90 p-2 rounded-full hover:bg-white text-gray-700 transition-colors shadow-sm">
+                                <i data-lucide="heart" class="w-4 h-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-2">
@@ -731,19 +874,53 @@
             `;
         }
 
+        // --- 6. Marketplace Logic ---
+        let marketFilter = 'all';
+        let marketSearch = '';
+
+        function filterMarketplace(filter) {
+            marketFilter = filter;
+            // Update active button state
+            document.querySelectorAll('#marketplace-filters .filter-btn').forEach(btn => {
+                if(btn.dataset.filter === filter) {
+                    btn.classList.add('bg-green-100', 'text-green-700');
+                    btn.classList.remove('text-gray-500', 'hover:bg-gray-100');
+                } else {
+                    btn.classList.remove('bg-green-100', 'text-green-700');
+                    btn.classList.add('text-gray-500', 'hover:bg-gray-100');
+                }
+            });
+            renderMarketplaceListings();
+        }
+
+        function searchMarketplace(val) {
+            marketSearch = val.toLowerCase();
+            renderMarketplaceListings();
+        }
+
+        function renderMarketplaceListings() {
+            const grid = document.getElementById('marketplace-grid');
+            if(!grid) return;
+
+            let filtered = appState.listings.filter(item => {
+                const matchesFilter = marketFilter === 'all' || item.type === marketFilter;
+                const matchesSearch = item.title.toLowerCase().includes(marketSearch) || item.location.toLowerCase().includes(marketSearch);
+                return matchesFilter && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">No properties found matching your criteria.</div>`;
+            } else {
+                grid.innerHTML = filtered.map(item => createListingCard(item)).join('');
+                lucide.createIcons();
+            }
+        }
+
         function renderHomeListings() {
             const grid = document.getElementById('home-featured-grid');
             if(grid) {
                 // Show only first 3
                 grid.innerHTML = appState.listings.slice(0, 3).map(item => createListingCard(item)).join('');
-                lucide.createIcons();
-            }
-        }
-
-        function renderMarketplaceListings() {
-            const grid = document.getElementById('marketplace-grid');
-            if(grid) {
-                grid.innerHTML = appState.listings.map(item => createListingCard(item)).join('');
                 lucide.createIcons();
             }
         }
@@ -754,43 +931,165 @@
             
             if(!container) return;
 
-            // Update Tab Text based on Role
-            if(appState.user && appState.user.role === 'buyer') {
+            const isBuyer = appState.user && appState.user.role === 'buyer';
+            
+            if(isBuyer) {
                 mainTab.textContent = "Saved Properties";
-            } else {
-                mainTab.textContent = "My Listings";
-            }
-
-            const myListings = appState.listings.filter(l => l.isUserListing);
-            
-            // For buyers, we could show "Saved" items, but for now we'll just show "No items" since we don't implement save logic yet.
-            // For sellers, we show their uploads.
-            
-            const isSeller = appState.user && appState.user.role === 'seller';
-            const displayList = isSeller ? myListings : []; 
-
-            if(displayList.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
-                        <div class="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i data-lucide="home" class="w-8 h-8 text-gray-400"></i>
+                // Filter listings that are in savedListings array
+                const savedItems = appState.listings.filter(l => appState.savedListings.includes(l.id));
+                
+                if(savedItems.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
+                            <div class="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="heart" class="w-8 h-8 text-gray-400"></i>
+                            </div>
+                            <h3 class="font-bold text-gray-900 text-lg mb-2">No Saved Properties</h3>
+                            <p class="text-gray-500 mb-6 max-w-sm mx-auto">Browse the marketplace and save properties you like to view them here.</p>
+                            <button onclick="router.navigate('marketplace')" class="text-green-600 font-semibold hover:underline">Browse Marketplace</button>
                         </div>
-                        <h3 class="font-bold text-gray-900 text-lg mb-2">${isSeller ? "No Properties Listed Yet" : "No Saved Properties"}</h3>
-                        <p class="text-gray-500 mb-6 max-w-sm mx-auto">${isSeller ? "Start building your real estate portfolio by uploading your first property." : "Browse the marketplace and save properties you like."}</p>
-                        ${isSeller ? '<button onclick="toggleUploadModal()" class="text-green-600 font-semibold hover:underline">Upload Property</button>' : '<button onclick="router.navigate(\'marketplace\')" class="text-green-600 font-semibold hover:underline">Browse Marketplace</button>'}
-                    </div>
-                `;
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${savedItems.map(item => createListingCard(item)).join('')}
+                        </div>
+                    `;
+                }
+
             } else {
-                container.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        ${displayList.map(item => createListingCard(item)).join('')}
-                    </div>
-                `;
+                // Seller View
+                mainTab.textContent = "My Listings";
+                const myListings = appState.listings.filter(l => l.isUserListing);
+                
+                if(myListings.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
+                            <div class="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="home" class="w-8 h-8 text-gray-400"></i>
+                            </div>
+                            <h3 class="font-bold text-gray-900 text-lg mb-2">No Properties Listed Yet</h3>
+                            <p class="text-gray-500 mb-6 max-w-sm mx-auto">Start building your real estate portfolio by uploading your first property.</p>
+                            <button onclick="toggleUploadModal()" class="text-green-600 font-semibold hover:underline">Upload Property</button>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${myListings.map(item => createListingCard(item)).join('')}
+                        </div>
+                    `;
+                }
             }
             lucide.createIcons();
         }
 
-        // --- 5. Authentication Logic ---
+        // --- 7. Chat Logic ---
+        function startChat() {
+            if(!appState.isLoggedIn) {
+                closePropertyDetails();
+                alert("Please log in as a buyer to contact the advertiser.");
+                toggleAuthModal('buyer');
+                return;
+            }
+            
+            const advertiser = document.getElementById('property-details-modal').dataset.advertiser;
+            
+            // Check if chat exists
+            let chat = appState.chats.find(c => c.advertiser === advertiser);
+            if (!chat) {
+                chat = {
+                    id: Date.now(),
+                    advertiser: advertiser,
+                    messages: []
+                };
+                appState.chats.push(chat);
+            }
+            
+            closePropertyDetails();
+            router.navigate('chat');
+            loadChat(chat.id);
+        }
+
+        function renderChatList() {
+            const list = document.getElementById('chat-list');
+            if(!list) return;
+
+            if (appState.chats.length === 0) {
+                list.innerHTML = `<div class="p-4 text-gray-500 text-center text-sm">No conversations yet.</div>`;
+                return;
+            }
+
+            list.innerHTML = appState.chats.map(chat => `
+                <div onclick="loadChat(${chat.id})" class="chat-sidebar-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${activeChatId === chat.id ? 'active' : ''}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold">
+                            ${chat.advertiser.charAt(0)}
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-gray-900">${chat.advertiser}</h4>
+                            <p class="text-xs text-gray-500 truncate w-32">
+                                ${chat.messages.length > 0 ? chat.messages[chat.messages.length - 1].text : 'No messages'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadChat(chatId) {
+            activeChatId = chatId;
+            const chat = appState.chats.find(c => c.id === chatId);
+            
+            // Update Sidebar Active State
+            renderChatList();
+
+            // Setup Main Area
+            document.getElementById('chat-header-avatar').innerText = chat.advertiser.charAt(0);
+            document.getElementById('chat-header-name').innerText = chat.advertiser;
+            document.getElementById('chat-header-status').innerText = "Online";
+            document.getElementById('chat-input-area').classList.remove('hidden');
+
+            const msgContainer = document.getElementById('chat-messages');
+            msgContainer.innerHTML = '';
+
+            if (chat.messages.length === 0) {
+                msgContainer.innerHTML = `<div class="text-center text-gray-400 text-sm mt-10">Start a conversation with ${chat.advertiser}</div>`;
+            } else {
+                chat.messages.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = `flex w-full mb-4`;
+                    div.innerHTML = `
+                        <div class="message-bubble ${msg.sender === 'me' ? 'message-sent' : 'message-received'}">
+                            ${msg.text}
+                        </div>
+                    `;
+                    msgContainer.appendChild(div);
+                });
+            }
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        }
+
+        function handleSendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('message-input');
+            const text = input.value.trim();
+            if (!text || !activeChatId) return;
+
+            const chat = appState.chats.find(c => c.id === activeChatId);
+            chat.messages.push({ sender: 'me', text: text });
+            
+            input.value = '';
+            loadChat(activeChatId);
+
+            // Simulate Reply
+            setTimeout(() => {
+                chat.messages.push({ sender: 'them', text: "Thanks for your interest! When would you like to view the property?" });
+                loadChat(activeChatId);
+            }, 1500);
+        }
+
+        // --- 8. Auth & Modal Logic ---
         function toggleAuthModal(initialRole) {
             const modal = document.getElementById('auth-modal');
             modal.classList.toggle('active');
@@ -798,7 +1097,6 @@
                 setAuthRole(initialRole);
                 switchAuthMode('signup');
             } else {
-                // Default reset
                 switchAuthMode('login');
             }
         }
@@ -818,16 +1116,10 @@
 
         function setAuthRole(role) {
             currentAuthRole = role;
-            
-            // Visual Updates
             document.getElementById('btn-role-buyer').className = role === 'buyer' ? 'auth-toggle-btn active' : 'auth-toggle-btn inactive';
             document.getElementById('btn-role-seller').className = role === 'seller' ? 'auth-toggle-btn active' : 'auth-toggle-btn inactive';
-            
-            // Text Updates
             document.getElementById('login-title').innerText = role === 'buyer' ? 'Buyer Login' : 'Seller Login';
             document.getElementById('signup-title').innerText = role === 'buyer' ? 'Create Buyer Account' : 'Partner Sign Up';
-            
-            // Field Visibility
             const idField = document.getElementById('id-verification-field');
             if(role === 'seller') {
                 idField.classList.remove('hidden');
@@ -847,7 +1139,6 @@
 
             setTimeout(() => {
                 appState.isLoggedIn = true;
-                // Note: In a real app, role comes from DB. Here we just set it based on current toggle for simulation, or default to buyer.
                 appState.user = { name: "User", email: "user@example.com", role: currentAuthRole };
                 localStorage.setItem('kaycribs_logged_in', 'true');
                 localStorage.setItem('kaycribs_user', JSON.stringify(appState.user));
@@ -898,17 +1189,20 @@
             router.navigate('home');
         }
 
-        // --- 6. UI Rendering ---
         function renderAuthUI() {
             const desktopAuth = document.getElementById('auth-buttons-desktop');
             const mobileAuth = document.getElementById('auth-buttons-mobile');
             const heroBtns = document.querySelectorAll('.hero-auth-btn');
             const sellerActions = document.getElementById('seller-actions');
+            const mobileChatLink = document.querySelector('.mobile-chat-link');
 
             if (appState.isLoggedIn) {
                 // Logged In View
-                const html = `
+                desktopAuth.innerHTML = `
                     <div class="flex items-center gap-3">
+                        <button onclick="router.navigate('chat')" class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 text-gray-600 transition-colors">
+                            <i data-lucide="message-square" class="w-5 h-5"></i>
+                        </button>
                         <button onclick="router.navigate('dashboard')" class="text-sm font-medium text-gray-700 hover:text-green-600">Dashboard</button>
                         <div class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold">
                             ${appState.user.name.charAt(0)}
@@ -916,22 +1210,19 @@
                         <button onclick="logout()" class="text-sm font-medium text-gray-500 hover:text-red-600">Logout</button>
                     </div>
                 `;
-                desktopAuth.innerHTML = html;
                 mobileAuth.innerHTML = `
                     <button onclick="router.navigate('dashboard'); toggleMobileMenu()" class="text-left text-gray-700 font-medium hover:text-green-600">My Dashboard</button>
                     <button onclick="logout(); toggleMobileMenu()" class="text-left text-red-600 font-medium">Logout</button>
                 `;
                 
-                // Update Name displays
+                if(mobileChatLink) mobileChatLink.classList.remove('hidden');
                 document.querySelectorAll('.user-name-display').forEach(el => el.innerText = appState.user.name);
                 
-                // Update Hero buttons to point to Dashboard
                 heroBtns.forEach(btn => {
                     btn.innerText = "Go to Dashboard";
                     btn.onclick = () => router.navigate('dashboard');
                 });
                 
-                // Show/Hide Seller Actions
                 if(sellerActions) {
                     if(appState.user.role === 'seller') {
                         sellerActions.classList.remove('hidden');
@@ -942,16 +1233,16 @@
 
             } else {
                 // Logged Out View
-                const html = `
+                desktopAuth.innerHTML = `
                     <button onclick="toggleAuthModal()" class="text-sm font-medium text-gray-600 hover:text-green-600">Login</button>
                     <button onclick="toggleAuthModal('buyer')" class="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-shadow shadow-md shadow-green-600/20">Get Started</button>
                 `;
-                desktopAuth.innerHTML = html;
                 mobileAuth.innerHTML = `
                     <button onclick="toggleAuthModal()" class="text-left text-gray-700 font-medium">Login</button>
                     <button onclick="toggleAuthModal('buyer')" class="text-left text-green-600 font-medium">Create Account</button>
                 `;
                 
+                if(mobileChatLink) mobileChatLink.classList.add('hidden');
                 heroBtns.forEach(btn => {
                     btn.innerText = "Create Account";
                     btn.onclick = () => toggleAuthModal('buyer');
@@ -959,12 +1250,15 @@
                 
                 if(sellerActions) sellerActions.classList.add('hidden');
             }
+            lucide.createIcons();
         }
 
-        // --- 7. Property Details Logic ---
+        // --- 9. Property Logic (Details & Upload) ---
         function openPropertyDetails(id) {
             const listing = appState.listings.find(l => l.id === id);
             if(!listing) return;
+
+            currentPropertyId = id; // Set global current ID for save/share
 
             document.getElementById('detail-image').src = listing.image;
             document.getElementById('detail-type').innerText = listing.type;
@@ -976,11 +1270,21 @@
             document.getElementById('advertiser-name').innerText = listing.advertiser || "Verified User";
             document.getElementById('advertiser-avatar').innerText = (listing.advertiser || "U").charAt(0);
 
-            // Store current advertiser for chat
             document.getElementById('property-details-modal').dataset.advertiser = listing.advertiser || "Agent";
+
+            // Update Save Button State in Modal
+            const detailSaveBtn = document.getElementById('detail-save-btn');
+            if(appState.savedListings.includes(id)) {
+                detailSaveBtn.innerHTML = `<i data-lucide="heart" class="w-5 h-5 fill-red-500 text-red-500"></i> Saved`;
+                detailSaveBtn.classList.add('text-red-600', 'bg-red-50');
+            } else {
+                detailSaveBtn.innerHTML = `<i data-lucide="heart" class="w-5 h-5"></i> Save`;
+                detailSaveBtn.classList.remove('text-red-600', 'bg-red-50');
+            }
 
             const modal = document.getElementById('property-details-modal');
             modal.classList.add('active');
+            lucide.createIcons();
         }
 
         function closePropertyDetails() {
@@ -988,18 +1292,6 @@
             modal.classList.remove('active');
         }
 
-        function startChat() {
-            if(!appState.isLoggedIn) {
-                closePropertyDetails();
-                alert("Please log in as a buyer to contact the advertiser.");
-                toggleAuthModal('buyer');
-                return;
-            }
-            const advertiser = document.getElementById('property-details-modal').dataset.advertiser;
-            alert(`Opening secure chat session with ${advertiser}...`);
-        }
-
-        // --- 8. Property Upload Logic ---
         function toggleUploadModal() {
             const modal = document.getElementById('upload-modal');
             modal.classList.toggle('active');
@@ -1040,15 +1332,12 @@
                     description: document.getElementById('prop-desc').value
                 };
 
-                // Add to start of array
                 appState.listings.unshift(newProperty);
                 
-                // Refresh Current View
                 if(router.currentPage === 'dashboard') renderDashboardListings();
                 if(router.currentPage === 'home') renderHomeListings();
                 if(router.currentPage === 'marketplace') renderMarketplaceListings();
                 
-                // Close & Reset
                 toggleUploadModal();
                 e.target.reset();
                 document.getElementById('image-preview').classList.add('hidden');
