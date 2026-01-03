@@ -1,0 +1,46 @@
+mutation CreateDemoData @transaction @auth(level: PUBLIC, insecureReason: "This operation is only used to seed demo data") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      email: "demouser1@example.com",
+      userType: "customer",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      email: "demouser2@example.com",
+      userType: "agent",
+      createdAt: "2024-04-26T12:00:00Z"
+    }
+  ])
+  property_insertMany(data: [
+    {
+      id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      agentId: "550e8400-e29b-41d4-a716-446655440001",
+      address: "123 Main St",
+      price: 250000.0,
+      propertyType: "house",
+      status: "active",
+      title: "Charming House",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      id: "fedcba98-7654-3210-0fed-cba987654321",
+      agentId: "550e8400-e29b-41d4-a716-446655440001",
+      address: "456 Elm St",
+      price: 150000.0,
+      propertyType: "apartment",
+      status: "active",
+      title: "Cozy Apartment",
+      createdAt: "2024-04-26T12:00:00Z"
+    }
+  ])
+    agentProfile_insertMany(data: [
+    {
+      agentId: "550e8400-e29b-41d4-a716-446655440001",
+      agencyName: "Demo Realty",
+      licenseNumber: "123456",
+      createdAt: "2024-04-26T12:00:00Z"
+    }
+  ])
+}

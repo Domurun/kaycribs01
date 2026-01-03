@@ -1,0 +1,41 @@
+mutation CreateUser($email: String!, $userType: String!) @auth(level: USER) {
+  user_insert(data: {
+    email: $email,
+    userType: $userType,
+    createdAt_expr: "request.time",
+    id_expr: "uuidV4()"
+  })
+}
+
+query GetProperties @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  properties {
+    id
+    address
+    price
+    propertyType
+    status
+  }
+}
+
+mutation CreateInquiry($propertyId: UUID!, $message: String!, $toAgentId: UUID!) @auth(level: USER) {
+  inquiry_insert(data: {
+    propertyId: $propertyId,
+    message: $message,
+    toAgentId: $toAgentId,
+    fromUserId_expr: "auth.uid",
+    createdAt_expr: "request.time",
+    id_expr: "uuidV4()"
+  })
+}
+
+query GetMySavedProperties @auth(level: USER) {
+  savedProperties(where: {userId: {eq_expr: "auth.uid"}}) {
+    property {
+      id
+      address
+      price
+      propertyType
+      status
+    }
+  }
+}
